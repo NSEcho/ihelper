@@ -55,8 +55,8 @@ var patchCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Printf("[*] Removing %s\n", dylibName)
-		fmt.Println("[*] Removing temp directory")
+		logger.Info(fmt.Sprintf("Removing %s", dylibName))
+		logger.Info("Removing temp directory")
 		os.RemoveAll(tdir)
 		return os.Remove(dylibName)
 	},
@@ -97,7 +97,7 @@ func downloadGadget() error {
 		return err
 	}
 
-	fmt.Printf("[*] Downloading frida version %s\n", dt.Version)
+	logger.Info(fmt.Sprintf("Downloading frida version %s", dt.Version))
 
 	assetName := fmt.Sprintf("frida-gadget-%s-ios-universal.dylib.xz", dt.Version)
 	var ur string
@@ -131,12 +131,11 @@ func downloadGadget() error {
 }
 
 func extractIPA(path, exe string) (string, string, error) {
-	fmt.Printf("[*] Extracting %s\n", path)
+	logger.Info(fmt.Sprintf("Extracting %s", path))
 
 	dir := os.TempDir()
 	tdir := filepath.Join(dir, "ihelper")
 	os.Mkdir(tdir, os.ModePerm)
-	//defer os.RemoveAll(tdir)
 
 	r, err := zip.OpenReader(path)
 	if err != nil {
@@ -177,7 +176,7 @@ func extractIPA(path, exe string) (string, string, error) {
 
 func copyGadgetToIPA(tdir, execPath string) error {
 	dir := filepath.Dir(execPath)
-	fmt.Printf("[*] Copying %s to extracted IPA\n", dylibName)
+	logger.Info(fmt.Sprintf("Copying %s to extracted IPA", dylibName))
 	pth := filepath.Join(tdir, dir, dylibName)
 	f, err := os.Create(pth)
 	if err != nil {
@@ -195,7 +194,7 @@ func copyGadgetToIPA(tdir, execPath string) error {
 }
 
 func addLoad(tdir, execPath string) error {
-	fmt.Println("[*] Adding LC_LOAD_DYLIB")
+	logger.Info("Adding LC_LOAD_DYLIB")
 	buff := new(bytes.Buffer)
 
 	fullPath := filepath.Join(tdir, execPath)
@@ -218,7 +217,7 @@ func addLoad(tdir, execPath string) error {
 
 	tempfile.Write(buff.Bytes())
 
-	fmt.Println("[*] Adding LC_RPATH")
+	logger.Info("Adding LC_RPATH")
 
 	withRpath := new(bytes.Buffer)
 
@@ -245,7 +244,7 @@ func addLoad(tdir, execPath string) error {
 func createIPA(tdir, originalIPA string) error {
 	newIPAName := strings.TrimSuffix(originalIPA, filepath.Ext(originalIPA))
 	newIPAName += "_patched.ipa"
-	fmt.Printf("[*] Creating new %s file\n", newIPAName)
+	logger.Info(fmt.Sprintf("Creating new %s file", newIPAName))
 	file, err := os.Create(newIPAName)
 	if err != nil {
 		return err
