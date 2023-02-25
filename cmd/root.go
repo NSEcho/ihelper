@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	_ "embed"
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cobra"
 )
 
+//go:embed scripts/script.js
+var scriptJS string
 var logger log.Logger
 
 var rootCmd = &cobra.Command{
