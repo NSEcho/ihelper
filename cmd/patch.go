@@ -20,6 +20,7 @@ import (
 const (
 	dylibName = "FridaGadget.dylib"
 	dylibPath = "@executable_path/FridaGadget.dylib"
+	cachePath = ".ihelper/cache/"
 )
 
 var patchCmd = &cobra.Command{
@@ -34,6 +35,16 @@ var patchCmd = &cobra.Command{
 		if !strings.HasSuffix(pth, ".ipa") {
 			return errors.New("file does not end with .ipa")
 		}
+
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+
+		if err := os.MkdirAll(filepath.Join(home, cachePath), os.ModePerm); err != nil {
+			return err
+		}
+
 		if err := downloadGadget(); err != nil {
 			return err
 		}
@@ -97,9 +108,32 @@ func downloadGadget() error {
 		return err
 	}
 
-	logger.Info(fmt.Sprintf("Downloading frida version %s", dt.Version))
+	found, gadget, err := checkCache(cachePath, dt.Version)
+	if err != nil {
+		return err
+	}
+
+	if found {
+		logger.Info(fmt.Sprintf("Frida version %s found in cache", dt.Version))
+		cache, err := os.Open(gadget)
+		if err != nil {
+			return err
+		}
+
+		f, err := os.Create(dylibName)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		io.Copy(f, cache)
+		return nil
+	}
+
+	logger.Info(fmt.Sprintf("Not found in cache; downloading frida version %s", dt.Version))
 
 	assetName := fmt.Sprintf("frida-gadget-%s-ios-universal.dylib.xz", dt.Version)
+
 	var ur string
 
 	for _, asset := range dt.Assets {
@@ -119,13 +153,22 @@ func downloadGadget() error {
 		return err
 	}
 
+	cacheFile, err := os.Create(gadget)
+	if err != nil {
+		return err
+	}
+	defer cacheFile.Close()
+
+	tee := io.TeeReader(r, cacheFile)
+
 	f, err := os.Create(dylibName)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	io.Copy(f, r)
+	io.Copy(f, tee)
+	io.Copy(cacheFile, tee)
 
 	return nil
 }

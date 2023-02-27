@@ -64,3 +64,20 @@ func download(target, directory, filename string, isFile bool) (string, int, err
 	<-done
 	return name, length, nil
 }
+
+func checkCache(cachePath, version string) (bool, string, error) {
+	cache := gadgetNameFromVersion(cachePath, version)
+
+	if _, err := os.Stat(cache); os.IsNotExist(err) {
+		return false, cache, nil
+	}
+
+	return true, cache, nil
+}
+
+func gadgetNameFromVersion(cachePath, version string) string {
+	home, _ := os.UserHomeDir()
+	cacheName := fmt.Sprintf("FridaGadget_%s.dylib", version)
+	gadgetCache := filepath.Join(home, cachePath, cacheName)
+	return gadgetCache
+}
