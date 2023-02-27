@@ -9,7 +9,7 @@ var fileCmd = &cobra.Command{
 	Use:   "file [filename]",
 	Short: "Download filename from the application",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 0 {
+		if len(args) != 1 {
 			return errors.New("missing filename")
 		}
 
