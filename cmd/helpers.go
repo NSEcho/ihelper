@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/frida/frida-go/frida"
 	"os"
 	"path/filepath"
@@ -52,12 +53,12 @@ func download(target, directory, filename string, isFile bool) (string, int, err
 	if isFile {
 		err := script.ExportsCallWithContext(ctx, "download_file", directory, filename)
 		if err != nil {
-			return "", 0, err.(error)
+			return "", 0, fmt.Errorf("%v", err)
 		}
 	} else {
 		err := script.ExportsCallWithContext(ctx, "download_bin")
 		if err != nil {
-			return "", 0, err.(error)
+			return "", 0, fmt.Errorf("%v", err)
 		}
 	}
 	<-done
